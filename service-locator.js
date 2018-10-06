@@ -14,13 +14,25 @@ const modulePaths = [
   './Routes/bookRouter',
   './models/bookModel',
 ];
+
 const defaultOr = R.ifElse(R.has('default'), R.prop('default'), R.identity);
 const acquireModule = R.compose(defaultOr, require);
-const makeGetter = (path)=>()=>acquireModule(path);
-const assoc = R.assoc(R.__, R.__, {});
-const makeLazyLoader = R.converge(assoc, [R.unary(basename), makeGetter]);
+const makeGetter = (path)=>(sLocator)=>acquireModule(path)(sLocator);
+const makeLazyLoader = R.converge(R.assoc(R.__, R.__, {}),
+                                  [R.unary(basename), makeGetter]);
 const transducer = R.map(makeLazyLoader);
 const reducer = R.flip(R.merge);
 
-export default R.transduce(transducer, reducer,
-                           {}, modulePaths);
+const store = R.transduce(transducer, reducer, {}, modulePaths);
+
+function serviceLocator(baseName, modudleStore = store){
+  const hasProp = R.has(baseName);
+  const notHasProp = R.compose(R.not, hasProp);
+
+  if(notHasProp(modudleStore))
+    throw new Error(`module ${baseName} not found`);
+  const factory = R.prop(baseName, modudleStore);
+  return factory(serviceLocator);
+}
+
+export default serviceLocator;
