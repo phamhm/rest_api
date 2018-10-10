@@ -8,13 +8,17 @@ if (process.env.NODE_ENV !== 'production'){
 }
 
 const app = express();
-const port = process.env.PORT || 5656;
+const port = process.env.PORT || 4000;
 
-const db = mongoose.connect(process.env.MONGO_DB, {useNewUrlParser: true});
+mongoose.connect(process.env.MONGO_DB,
+                 {useNewUrlParser: true,
+                  autoIndex: false})
+  .catch((err)=>console.log(err));
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
 app.use('/book', serviceLocator('bookRouter'));
+app.use('/account', serviceLocator('accountRouter'));
 
 app.listen(port, ()=>console.log(`listening to port ${port}`));
