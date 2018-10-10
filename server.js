@@ -18,7 +18,8 @@ mongoose.connect(process.env.MONGO_DB,
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
-app.use('/book', serviceLocator('bookRouter'));
 app.use('/account', serviceLocator('accountRouter'));
 
 app.listen(port, ()=>console.log(`listening to port ${port}`));
+
+export default app;

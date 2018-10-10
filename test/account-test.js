@@ -1,26 +1,26 @@
+import 'babel-polyfill';
 import path from 'path';
 const dotenvPath = path.resolve('./.env');
 require('dotenv').config({path: dotenvPath});
-import R from 'ramda';
-const mongoose = require('mongoose');
-const chai = require('chai');
-const { expect } = chai;
-const accountModel =  require('../models/accountModel.js');
+import chai from 'chai';
+import chaiHttp from 'chai-http';
 
-beforeEach((done)=>{
-  mongoose.connect(process.env.MONGO_DB,
-                   {useNewUrlParser:true,
-                    autoIndex:false})
-    .then(()=>done())
-    .catch(console.log);
-});
+const should = chai.should();
+chai.use(chaiHttp);
 
-afterEach((done)=>{
-  mongoose.connection.close(()=>done());
-});
+describe('Account', function(){
+  let server;
+  before(()=>server = require('../server').default);
 
-describe('Account Test', function(){
-  it("should say hello", ()=>{
-    expect('hell').to.equal('hell');
+
+  describe('/GET Accounts', ()=>{
+    it('should get all accounts', (done)=>{
+      chai.request(server)
+        .get('/account')
+        .end((err, res)=>{
+          res.should.have.status(200);
+          done();
+        });
+    });
   });
 });

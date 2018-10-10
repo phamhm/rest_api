@@ -11,11 +11,7 @@ import { basename } from 'path';
 import R from 'ramda';
 
 const modulePaths = [
-  './Routes/bookRouter',
   './Routes/accountRouter',
-  './models/bookModel',
-  './models/accountModel',
-  './models/nameModel'
 ];
 
 const defaultOr = R.ifElse(R.has('default'), R.prop('default'), R.identity);
@@ -26,6 +22,7 @@ const makeLazyLoader = R.converge(R.assoc(R.__, R.__, {}),
 const transducer = R.map(makeLazyLoader);
 const reducer = R.flip(R.merge);
 
+
 const store = R.transduce(transducer, reducer, {}, modulePaths);
 
 function serviceLocator(baseName, modudleStore = store){
@@ -34,8 +31,11 @@ function serviceLocator(baseName, modudleStore = store){
 
   if(notHasProp(modudleStore))
     throw new Error(`module ${baseName} not found`);
+
   const factory = R.prop(baseName, modudleStore);
-  return factory(serviceLocator);
+  const module = factory(serviceLocator);
+
+  return module;
 }
 
 export default serviceLocator;
