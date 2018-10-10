@@ -25,6 +25,6 @@ const nameModel = new Schema({
                 'Address Override'],
         }
 });
-
-export default mongoose.model(ModelNames.name,
-                              nameModel);
+const model = mongoose.model(ModelNames.name,
+                             nameModel);
+export default ()=>model;

@@ -12,5 +12,6 @@ const accountModel = new Schema({
   jointName: [{type: ObjectId, ref: ModelNames.name}],
 });
 
-export default mongoose.model(ModelNames.account,
-                                      accountModel);
+const model =  mongoose.model(ModelNames.account,
+                              accountModel);
+export default ()=>model;

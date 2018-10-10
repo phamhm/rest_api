@@ -4,6 +4,7 @@ const dotenvPath = path.resolve('./.env');
 require('dotenv').config({path: dotenvPath});
 import chai from 'chai';
 import chaiHttp from 'chai-http';
+import mongoose from 'mongoose';
 
 const should = chai.should();
 chai.use(chaiHttp);
@@ -11,7 +12,14 @@ chai.use(chaiHttp);
 describe('Account', function(){
   let server;
   before(()=>server = require('../server').default);
+  after(()=>{
+    require('../server').server.close();
 
+    // without this mongoose will complete that
+    // model need to be rebuilt
+    mongoose.models = {};
+    mongoose.schemas = {};
+  });
 
   describe('/GET Accounts', ()=>{
     it('should get all accounts', (done)=>{

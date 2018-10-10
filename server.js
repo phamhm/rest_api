@@ -20,6 +20,8 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 app.use('/account', serviceLocator('accountRouter'));
 
-app.listen(port, ()=>console.log(`listening to port ${port}`));
+const server = app.listen(port, ()=>console.log(`listening to port ${port}`));
+
+export {server};
 
 export default app;

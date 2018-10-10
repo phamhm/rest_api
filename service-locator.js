@@ -12,6 +12,8 @@ import R from 'ramda';
 
 const modulePaths = [
   './Routes/accountRouter',
+  './models/accountModel',
+  './models/nameModel'
 ];
 
 const defaultOr = R.ifElse(R.has('default'), R.prop('default'), R.identity);
