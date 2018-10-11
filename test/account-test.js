@@ -48,8 +48,6 @@ describe('Account', function(){
         .send(account)
         .end((err, res)=>{
           res.should.have.status(200);
-          res.body.should.have.property('acct');
-          res.body.should.have.property('primeName');
           done();
         });
     });

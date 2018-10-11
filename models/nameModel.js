@@ -4,7 +4,7 @@ import ModelNames from './model-names';
 const { Schema } = mongoose;
 const { Types: { ObjectId } } = Schema;
 
-const nameModel = new Schema({
+const nameSchema = new Schema({
   account: {type:ObjectId, ref:ModelNames.account},
   first: String,
   middle: String,
@@ -25,6 +25,23 @@ const nameModel = new Schema({
                 'Address Override'],
         }
 });
-const model = mongoose.model(ModelNames.name,
-                             nameModel);
-export default ()=>model;
+
+nameSchema.methods.handleValidate = async function(res){
+  try {
+   await this.validate();
+  } catch(err){
+    res.status(500).send(err);
+  }
+};
+
+const NameModel = mongoose.model(ModelNames.name,
+                                 nameSchema);
+
+NameModel.nameFactory = (nameObj)=>new NameModel(nameObj);
+
+NameModel.saveName = (acctNumber, name)=>{
+  name.account = acctNumber;
+  return name.save();
+};
+
+export default ()=>NameModel;
