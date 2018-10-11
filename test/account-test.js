@@ -31,4 +31,27 @@ describe('Account', function(){
         });
     });
   });
+
+  describe('/POST Account', ()=>{
+    it('should post an account with primename', (done)=>{
+      let account ={
+        primeName: {
+          first: "Beethoven",
+          last: "Beeth",
+          ssn: "123-45-7890",
+          type: "Prime"
+        }
+      };
+
+      chai.request(server)
+        .post('/account')
+        .send(account)
+        .end((err, res)=>{
+          res.should.have.status(200);
+          res.body.should.have.property('acct');
+          res.body.should.have.property('primeName');
+          done();
+        });
+    });
+  });
 });
