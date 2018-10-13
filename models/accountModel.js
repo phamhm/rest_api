@@ -2,26 +2,32 @@ import mongoose from 'mongoose';
 import ModelNames from './model-names';
 import R from 'ramda';
 const { Schema } = mongoose;
+import NameModel from './nameModel';
 
 const accountSchema = new Schema({
   _id: {type: Schema.Types.ObjectId, auto:true, alias:'number'},
   openDate: {type:Date, default: Date.now},
   closeDate: {type:Date, default:null},
+  Names: [NameModel().schema],
+  Shares: [{type: Schema.Types.ObjectId, ref:ModelNames.share}]
 });
 
-accountSchema.methods.handleValidate = async function(res){
-  try{
-    await this.validate();
-  } catch(err){
-    res.status(500).send(err);
-  }
+accountSchema.statics.getSubRecords = ()=>[
+  ModelNames.share,
+  ModelNames.loan,
+].map(name=>name+'s');
+
+accountSchema.statics.createWithRefs = async function(data){
+
+  const subrecords = AccountModel.getSubRecords();
+
+  const subObjs = R.pick(subrecords, data);
+
+  const mainObj = R.omit(subrecords, data);
 };
 
 const AccountModel =  mongoose.model(ModelNames.account,
                                      accountSchema);
-
-AccountModel.accountFactory =  (accountObj)=>new AccountModel(accountObj),
-
 AccountModel.get = ()=>{
   return (req, res)=>{
     AccountModel.find({}, (err, accounts)=>res.json(accounts));
@@ -29,43 +35,47 @@ AccountModel.get = ()=>{
 };
 
 AccountModel.post = (serviceLocator)=>{
-  const NameModel = serviceLocator('nameModel');
-
-  const primenameLens = R.lensProp('primeName');
-  const getPrimeName = R.view(primenameLens);
-  const removePrimeName = R.dissoc('primeName');
-
-  const createAccount = R.compose(AccountModel.accountFactory,
-                                  removePrimeName);
-
-  const createPrimeName = R.compose(NameModel.nameFactory,
-                                    getPrimeName);
-
   return async (req, res)=>{
-    const account = createAccount(req.body);
-    const name = createPrimeName(req.body);
+    const subrecords = AccountModel.getSubRecords();
 
-    name.account = account.number;
+    const subrecObjs = R.pick(subrecords, req.body);
 
-    const save = (record)=>record.save();
-    const validate = (record)=>record.validate();
+    const accountObj = R.omit(subrecords, req.body);
 
-    // trying to validate all records:
+    const account = new AccountModel(accountObj);
+
+    for (let [recordName, records] of R.toPairs(subrecObjs)){
+      const modelname = R.init(recordName);
+      const subrecModel = mongoose.model(modelname);
+
+      let subs;
+      try{
+        subs = await subrecModel.create(records);
+      } catch(err){
+        return void res.status(500).send(err);
+      }
+
+      const validatingSubs = subs.map(sub=>sub.validate());
+
+      try{
+        await Promise.all(validatingSubs);
+      } catch(err){
+        return void res.status(500).send(err);
+      }
+    }
+
     try{
-      await Promise.all(R.map(validate, [account, name]));
+      await account.validate();
     } catch(err){
-      res.status(500).send(err);
+      return void res.status(500).send(err);
     }
 
-    // trying to save all records:
-    let result;
-    try{
-      result = await Promise.all(R.map(save, [account, name]));
+    try {
+      const result = await account.save();
+      res.status(201).send(result);
     }catch(err){
-      res.status(500).send(err);
+      return void res.status(500).send(err);
     }
-
-    res.status(200).send(result);
   };
 };
 

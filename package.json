@@ -13,6 +13,7 @@
     "body-parser": "^1.18.3",
     "dotenv": "^6.0.0",
     "express": "^4.16.3",
+    "folktale": "^2.3.1",
     "mongoose": "^5.2.18",
     "ramda": "^0.25.0"
   },

@@ -26,22 +26,7 @@ const nameSchema = new Schema({
         }
 });
 
-nameSchema.methods.handleValidate = async function(res){
-  try {
-   await this.validate();
-  } catch(err){
-    res.status(500).send(err);
-  }
-};
-
 const NameModel = mongoose.model(ModelNames.name,
                                  nameSchema);
-
-NameModel.nameFactory = (nameObj)=>new NameModel(nameObj);
-
-NameModel.saveName = (acctNumber, name)=>{
-  name.account = acctNumber;
-  return name.save();
-};
 
 export default ()=>NameModel;
