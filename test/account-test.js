@@ -38,15 +38,16 @@ describe('Account', function(){
   describe('/POST Account', ()=>{
     it('should post an account with primename', (done)=>{
       let account ={
-        Names: [
+        Account: {},
+        Name: [
           {first: "Beethoven",
            last: "Beeth",
-           ssn: "123-45-7890",
+           ssn: "123-45-7330",
            type: "Prime"},
           {
             first:'chopin',
             last: 'this is the live',
-            ssn: '456-23-3433',
+            ssn: '456-23-4333',
             type: "Joint",
           }
         ]
@@ -65,13 +66,13 @@ describe('Account', function(){
   describe('/POST Account', ()=>{
     it('should post an account with one share', (done)=>{
       let account ={
-        Names: [
+        Account: { Names: [
           {first: "Beethoven",
            last: "Beeth",
            ssn: "123-45-7890",
            type: "Prime"},
-        ],
-        Shares:[
+        ]},
+        Share:[
           {type: 100, description:'checking'},
           {type: 300, description:'saving'},
           {type: 400, description:'certificate'}
@@ -82,10 +83,11 @@ describe('Account', function(){
         .post('/account')
         .send(account)
         .end((err, res)=>{
+          // console.log(res);
           res.should.have.status(201);
 
           done();
         });
     });
-  })
+  });
 });

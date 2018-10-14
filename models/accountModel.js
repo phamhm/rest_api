@@ -3,6 +3,10 @@ import ModelNames from './model-names';
 import R from 'ramda';
 const { Schema } = mongoose;
 import NameModel from './nameModel';
+import Future from 'fluture';
+import S from 'sanctuary';
+import Result from 'folktale/result';
+
 
 const accountSchema = new Schema({
   _id: {type: Schema.Types.ObjectId, auto:true, alias:'number'},
@@ -35,48 +39,45 @@ AccountModel.get = ()=>{
 };
 
 AccountModel.post = (serviceLocator)=>{
-  return async (req, res)=>{
-    const subrecords = AccountModel.getSubRecords();
+  return (req, res) => {
+    const data = req.body;
 
-    const subrecObjs = R.pick(subrecords, req.body);
+    const flatten = R.compose(R.flatten, R.of);
 
-    const accountObj = R.omit(subrecords, req.body);
+    // {Account: value} => {Account: Future.Of(Model.create(value))};
+    const liftModelToValues =  (objValue, modelname) =>  {
+      const values = flatten(objValue);//[[a], [a], [a]] => [a, a, a]
 
-    const account = new AccountModel(accountObj);
+      const lift =  R.lift((k, v)=>({[k]:v}));
 
-    for (let [recordName, records] of R.toPairs(subrecObjs)){
-      const modelname = R.init(recordName);
-      const subrecModel = mongoose.model(modelname);
+      return lift([modelname], values);
+    };
 
-      let subs;
-      try{
-        subs = await subrecModel.create(records);
-      } catch(err){
-        return void res.status(500).send(err);
+    const flatData = R.compose(flatten,
+                               R.values,
+                               R.mapObjIndexed(liftModelToValues));
+    const parsedData = flatData(data);
+
+    Future.do(function* (){
+      const mObjs = [];
+      for(let data of parsedData){
+        const [modelname, value] = flatten(R.toPairs(data));
+
+        const Model = yield Future.try(()=>mongoose.model(modelname));
+        const mObj = new Model(value);
+        yield Future.tryP(()=>mObj.validate());
+        mObjs.push(mObj);
       }
 
-      const validatingSubs = subs.map(sub=>sub.validate());
-
-      try{
-        await Promise.all(validatingSubs);
-      } catch(err){
-        return void res.status(500).send(err);
+      for (let mObj of mObjs){
+        yield Future.tryP(()=>mObj.save());
       }
-    }
+    }).fork(err=>res.status(500).send(err),
+            data=>res.status(201).send(data));
 
-    try{
-      await account.validate();
-    } catch(err){
-      return void res.status(500).send(err);
-    }
-
-    try {
-      const result = await account.save();
-      res.status(201).send(result);
-    }catch(err){
-      return void res.status(500).send(err);
-    }
+    console.log('after future');
   };
+
 };
 
 export default ()=>AccountModel;
