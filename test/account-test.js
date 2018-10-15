@@ -36,7 +36,7 @@ describe('Account', function(){
   });
 
   describe('/POST Account', ()=>{
-    it('should post an account with primename', (done)=>{
+    it('should post an account with name(s)', (done)=>{
       let account ={
         Account: {},
         Name: [
@@ -64,7 +64,7 @@ describe('Account', function(){
   });
 
   describe('/POST Account', ()=>{
-    it('should post an account with one share', (done)=>{
+    it('should post an account with shares', (done)=>{
       let account ={
         Account: { Names: [
           {first: "Beethoven",
@@ -83,7 +83,8 @@ describe('Account', function(){
         .post('/account')
         .send(account)
         .end((err, res)=>{
-          // console.log(res);
+          if(res.error.text)
+            console.log(res.error.text);
           res.should.have.status(201);
 
           done();

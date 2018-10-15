@@ -22,6 +22,6 @@ app.use('/account', serviceLocator('accountRouter'));
 
 const server = app.listen(port, ()=>console.log(`listening to port ${port}`));
 
-export {server};
+export { server };
 
 export default app;

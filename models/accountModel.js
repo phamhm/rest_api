@@ -53,31 +53,28 @@ AccountModel.post = (serviceLocator)=>{
       return lift([modelname], values);
     };
 
-    const flatData = R.compose(flatten,
-                               R.values,
-                               R.mapObjIndexed(liftModelToValues));
-    const parsedData = flatData(data);
+    const flatenData = R.compose(flatten, R.values,
+                                 R.mapObjIndexed(liftModelToValues));
+    const flatData = flatenData(data);
 
-    Future.do(function* (){
-      const mObjs = [];
-      for(let data of parsedData){
+    const dataValidateAndSave =(data)=>{
+      return Future.do(function*(){
         const [modelname, value] = flatten(R.toPairs(data));
 
         const Model = yield Future.try(()=>mongoose.model(modelname));
         const mObj = new Model(value);
         yield Future.tryP(()=>mObj.validate());
-        mObjs.push(mObj);
-      }
-
-      for (let mObj of mObjs){
         yield Future.tryP(()=>mObj.save());
-      }
-    }).fork(err=>res.status(500).send(err),
-            data=>res.status(201).send(data));
+        return mObj;
+      });
+    };
 
-    console.log('after future');
+    const futures = R.traverse(Future.of, dataValidateAndSave, flatData);
+    futures.fork(
+      (err)=>res.status(500).json(err),
+      (data)=>res.status(201).json(data)
+    );
   };
-
 };
 
 export default ()=>AccountModel;
